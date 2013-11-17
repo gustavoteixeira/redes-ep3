@@ -35,8 +35,8 @@ $simulator duplex-link $r0.2 $r1.0 2Mbps 20ms
 $simulator duplex-link $r1.1 $h2 10Mbps 5ms
 $simulator duplex-link $r1.2 $h3 5Mbps 2ms
 
-# Configuracao dos hosts: endereco IP do computador, enderec ¸o IP do
-# roteador padrao e enderec ¸o IP do servidor DNS
+# Configuracao dos hosts: endereco IP do computador, endereço IP do
+# roteador padrao e endereço IP do servidor DNS
 # Obs.: Considere que todas as redes sempre serao classe C, ou seja,
 # mascara = 255.255.255.0
 
@@ -44,14 +44,14 @@ $simulator $h0 10.0.0.1 10.0.0.2 192.168.1.1
 $simulator $h1 10.1.1.1 10.1.1.2 192.168.1.1
 $simulator $h2 192.168.2.2 192.168.2.3 192.168.1.1
 
-# Obs.: o enderec ¸o 1.1.1.1 representa um servidor DNS raiz que todos
+# Obs.: o endereço 1.1.1.1 representa um servidor DNS raiz que todos
 # os servidores DNS da simulacao precisam ter configurados como o
 # servidor DNS deles (nao vai ser usado para nada mas sempre tem que
 # ter essa configuracao)
 
 $simulator $h3 192.168.1.1 192.168.1.2 1.1.1.1
 
-# Configuracao dos roteadores: porta, enderec ¸o IP [[porta, endereco
+# Configuracao dos roteadores: porta, endereço IP [[porta, endereco
 # IP] ...]
 
 $simulator $r0 0 10.0.0.2 1 10.1.1.2 2 192.168.3.3
@@ -101,7 +101,7 @@ $simulator attach-agent $sniffer2 $h1 $r0.1 "/tmp/sniffer2"
 # foram feitos com o nome da maquina, o que vai exigir um acessos DNS
 # para (considere que as maquinas nao possuem cache. Ou seja, elas
 # sempre vao consultar um servidor DNS). Um dos acessos entretanto,
-# esta sendo feito direto pelo enderec ¸o IP, ou seja, nesse caso uma
+# esta sendo feito direto pelo endereço IP, ou seja, nesse caso uma
 # consulta DNS nao devera ser realizada
 
 $simulator at 0.5 "httpc0 GET h2"

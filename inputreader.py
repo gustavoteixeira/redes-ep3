@@ -24,23 +24,51 @@ def oursplit(input):
         start = e + 1
     return filter(None, resp)
     
+class Host:
+    def configurate(self, input):
+        self.ip, self.default_gateway, self.dns_server = input
+    
+class Router:
+    def __init__(self, size):
+        self.size = size
+        self.interfaces = [None] * size
+        
+    def configurate_route(self, input):
+        raise Exception("NYI")
+        
+    def configurate_performance(self, input):
+        raise Exception("NYI")
+        
+    def configurate_ip(self, input):
+        assert(len(input) % 2 == 0)
+        for i in xrange(len(input) / 2):
+            self.interfaces[int(input[i * 2 + 0])] = input[i * 2 + 1]
+        
+    def configurate(self, input):
+        if input[0] == 'route':
+            self.configurate_route(input[1:])
+        elif input[0] == 'performance':
+            self.configurate_performance(input[1:])
+        else:
+            self.configurate_ip(input)
+    
 class Simulator:
     def __init__(self, env):
         self.env = env
         
     def __call__(self, input):
-        if type(input[0]) == str:
+        if input[0][0] == '$':
+            # Configurating a host or a router
+            self.env.expand(input[0]).configurate(input[1:])
+        else:
             name = input[0].replace('-', '') # - is an invalid character in method names in python
             return getattr(self, 'method_' + name)(input[1:])
-        else:
-            # Configurating a host or a router
-            return False
         
     def method_host(self, input):
-        return 'host'
+        return Host()
         
     def method_router(self, input):
-        return 'router-' + input[0]
+        return Router(int(input[0]))
         
     def method_duplexlink(self, input):
         return 'duplex-link'
@@ -83,6 +111,7 @@ def parse(file):
         input = oursplit(line)
         print(input)
         print(env.evaluate(input))
+        print("")
     
     print("-------")
     for v in env.variables:
