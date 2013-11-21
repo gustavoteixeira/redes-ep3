@@ -9,7 +9,7 @@ def find_first_of(s, occ, start = 0):
     if i > len(s):
         return -1
     return i
-
+    
 groupers = { '[': ']', '"': '"' }
 def oursplit(input):
     resp = []
@@ -45,13 +45,15 @@ class Simulator:
         return lib.Router(int(input[0]))
         
     def method_duplexlink(self, input):
-        source      = input[0]
-        destination = input[1]
-        if source.find('.') == -1: source += ".0"
-        if destination.find('.') == -1: destination += ".0"
         link = lib.DuplexLink(input[2], input[3])
+        source      = lib.force_interface(input[0])
+        destination = lib.force_interface(input[1])
         link.attach(self.env.expand(source), self.env.expand(destination))
         return link
+        
+    def method_attachagent(self, input):
+        agent = self.env.expand(input[0])
+        return agent.attach(self.env, input[1:])
  
 class Env:
     def function_set(self, input):
@@ -59,7 +61,8 @@ class Env:
         return self.variables[input[0]]
         
     def function_new(self, input):
-        return input[0]
+        class_name = input[0].replace('/', '')
+        return lib.__dict__[class_name]()
 
     def __init__(self):
         self.variables = { 'simulator': Simulator(self) }
@@ -67,7 +70,7 @@ class Env:
             'set': self.function_set,
             'new': self.function_new
         }
-        
+                
     def expand(self, s):
         if s[0] == '$':
             try:
