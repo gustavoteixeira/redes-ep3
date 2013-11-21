@@ -1,16 +1,22 @@
 class IP(object):
     def __init__(self, ip):
-        self.ip = ip
+        assert(ip.count(".") == 3)
+        sum = 0
+        multi = 1
+        for piece in reversed(ip.split('.')):
+            sum += int(piece) * multi
+            multi *= 256
+        self.value = sum
         
     def __repr__(self):
-        return self.ip
+        return str(self.value)
 
 class NetworkInterface(object):
     def __init__(self, ip):
         self.ip = ip
         self.link = None
         
-    def __repr__(self):
+    def __str__(self):
         return "[Interface - ip: {0}, link: {1}]".format(self.ip, self.link)
         
 class DuplexLink(object):
@@ -23,7 +29,7 @@ class DuplexLink(object):
         endpoint_a.link = self
         endpoint_b.link = self
         
-    def __repr__(self):
+    def __str__(self):
         return "[DuplexLink - bandwidth: {0}, latency: {1}, attached: {2}]".format(self.bandwidth, self.latency, self.endpoint_a != None)
         
 class Host(object):
@@ -39,22 +45,37 @@ class Host(object):
         assert(key == 0)
         return self.interface
         
-    def __repr__(self):
+    def __str__(self):
         return "[Host - interface: {0}, default_gateway: {1}, dns_server: {2}]".format(self.interface, self.default_gateway, self.dns_server)
     
 class Router(object):
     def __init__(self, size):
         self.size = size
         self.interfaces = [NetworkInterface(None) for _ in range(size)]
+        self.process_time = None
+        self.routes = []
         
     def __getitem__(self, key):
         return self.interfaces[key]
         
     def configurate_route(self, input):
-        raise Exception("NYI")
+        assert(len(input) % 2 == 0)
+        for x in range(len(input) / 2):
+            mask = IP(input[2*x])
+            target = input[2*x + 1]
+            try:
+                target = IP(target)
+            except AssertionError:
+                target = self.interfaces[int(target)]
+            self.routes.append((mask, target))
         
     def configurate_performance(self, input):
-        raise Exception("NYI")
+        assert(len(input) % 2 == 1)
+        self.process_time = input[0]
+        for x in range(len(input) / 2):
+            interface = int(input[2*x + 1])
+            size = int(input[2*x + 2])
+            self.interfaces[interface].queue_size = size
         
     def configurate_ip(self, input):
         assert(len(input) % 2 == 0)
@@ -70,5 +91,5 @@ class Router(object):
             self.configurate_ip(input)
         return self
         
-    def __repr__(self):
-        return "[Router - interfaces: {0}]".format(self.interfaces) 
+    def __str__(self):
+        return "[Router - process_time: {0}, interfaces: {1}, routes: {2}]".format(self.process_time, self.interfaces, self.routes)
