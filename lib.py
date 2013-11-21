@@ -92,17 +92,7 @@ class Host(object):
     def receive_data(self, data, port, source):
         if port in self.sockets:
             return self.sockets[port].receive(data, source)
-        
-    def dns_request(self, hostname, callback):
-        
-        def dns_callback(socket, data, source):
-            socket.close()
-            callback(IP(data))
-        
-        socket = self.create_socket('udp')
-        socket.callback = dns_callback
-        socket.send_to(hostname, (self.dns_server, 53))
-        
+                
     def __getitem__(self, key):
         assert(key == 0)
         return self.interface

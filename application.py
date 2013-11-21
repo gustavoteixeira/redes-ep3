@@ -4,6 +4,16 @@ from base import IP
 
 GAMBSDAHORA = {}
 
+def MakeDNSRequest(base_host, target_hostname, callback):
+    
+    def dns_callback(socket, data, source):
+        socket.close()
+        callback(IP(data))
+    
+    socket = base_host.create_socket('udp')
+    socket.callback = dns_callback
+    socket.send_to(target_hostname, (base_host.dns_server, 53))
+
 class AgentService(object):
     def attach(self, env, input):
         host = env.expand(input[0])
@@ -56,7 +66,7 @@ class AgentHTTPClient(AgentService):
             
         except AssertionError:
             print(input[1] + " is not an IP, query DNS.")
-            self.host.dns_request(input[1], self.do_get)
+            MakeDNSRequest(self.host, input[1], self.do_get)
             
     
 class AgentSniffer(object):
