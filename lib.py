@@ -1,6 +1,9 @@
 from __future__ import print_function
 import random
 
+
+GAMBSDAHORA = {}
+
 def force_interface(s):
     if s.find('.') == -1:
         return s + ".0"
@@ -47,7 +50,14 @@ class Socket(object):
         self.callback = None
         
     def send_to(self, data, address):
+        ip, port = address
         print("Mandando para {0} o seguinte: '{1}'".format(address, data))
+        
+        target_host = GAMBSDAHORA[ip.value]
+        target_host.receive_data(data, port)
+        
+    def receive(self, data):
+        self.callback(data)
         
     def close(self):
         self.host.remove_socket(self.port)
@@ -61,6 +71,7 @@ class Host(object):
 
     def configurate(self, input):
         self.interface.ip, self.default_gateway, self.dns_server = map(IP, input)
+        GAMBSDAHORA[self.interface.ip.value] = self
         return self
         
     def attach(self, agent):
@@ -83,12 +94,16 @@ class Host(object):
     def remove_socket(self, port):
         del self.sockets[port]
         
+    def receive_data(self, data, port):
+        return self.sockets[port].receive(data)
+        
     def dns_request(self, hostname, callback):
         
         def dns_callback(socket, data):
             socket.close()
             callback(IP(data))
         
+        print("DNS request for " + hostname)
         socket = self.create_socket('udp')
         socket.callback = dns_callback
         socket.send_to(hostname, (self.dns_server, 53))
