@@ -1,4 +1,4 @@
-import lib
+import lib, base
 
 def find_first_of(s, occ, start = 0):
     i = len(s) + 1
@@ -46,8 +46,8 @@ class Simulator:
         
     def method_duplexlink(self, input):
         link = lib.DuplexLink(input[2], input[3])
-        source      = lib.force_interface(input[0])
-        destination = lib.force_interface(input[1])
+        source      = base.force_interface(input[0])
+        destination = base.force_interface(input[1])
         link.attach(self.env.expand(source), self.env.expand(destination))
         return link
         

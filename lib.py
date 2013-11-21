@@ -1,30 +1,9 @@
 from __future__ import print_function
 import random
-
+import base
+from base import IP
 
 GAMBSDAHORA = {}
-
-def force_interface(s):
-    if s.find('.') == -1:
-        return s + ".0"
-    return s
-
-class IP(object):
-    def __init__(self, ip):
-        assert(str(ip).count(".") == 3)
-        self.original = ip
-        self.value = self.convert(ip)
-    
-    def convert(self, s):
-        sum = 0
-        multi = 1
-        for piece in reversed(s.split('.')):
-            sum += int(piece) * multi
-            multi *= 256
-        return sum
-        
-    def __repr__(self):
-        return self.original
 
 class UDPPacket(object):
     def __init__(self, data, source_port, destination_port):
@@ -235,8 +214,8 @@ class AgentHTTPClient(AgentService):
     
 class AgentSniffer(object):
     def attach(self, env, input):
-        interface_a = env.expand(force_interface(input[0]))
-        interface_b = env.expand(force_interface(input[1]))
+        interface_a = env.expand(base.force_interface(input[0]))
+        interface_b = env.expand(base.force_interface(input[1]))
         assert(interface_a.link == interface_b.link)
         self.file = input[2]
         interface_a.link.sniffers.append(self)
