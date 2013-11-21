@@ -54,6 +54,17 @@ class Simulator:
     def method_attachagent(self, input):
         agent = self.env.expand(input[0])
         return agent.attach(self.env, input[1:])
+        
+    def method_at(self, input):
+        time = input[0]
+        request = input[1]
+        
+        request_input = oursplit(request)
+        if request_input[0] == 'finish':
+            return("MEU DEUS TERMINOU AS COISAS")
+        
+        agent = self.env.expand("$" + request_input[0])
+        return agent.do_stuff(request_input[1:])
  
 class Env:
     def function_set(self, input):

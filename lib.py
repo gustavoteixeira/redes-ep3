@@ -1,3 +1,6 @@
+from __future__ import print_function
+import random
+
 def force_interface(s):
     if s.find('.') == -1:
         return s + ".0"
@@ -37,12 +40,24 @@ class DuplexLink(object):
         
     def __str__(self):
         return "[DuplexLink - bandwidth: {0}, latency: {1}, attached: {2}]".format(self.bandwidth, self.latency, self.endpoint_a != None)
+
+class Socket(object):
+    def __init__(self, protocol, host, port):
+        self.protocol, self.host, self.port = protocol, host, port
+        self.callback = None
+        
+    def send_to(self, data, address):
+        print("Mandando para {0} o seguinte: '{1}'".format(address, data))
+        
+    def close(self):
+        self.host.remove_socket(self.port)
         
 class Host(object):
     def __init__(self):
         self.interface = NetworkInterface(None)
         self.default_gateway, self.dns_server = None, None
         self.agents = []
+        self.sockets = {}
 
     def configurate(self, input):
         self.interface.ip, self.default_gateway, self.dns_server = map(IP, input)
@@ -51,6 +66,32 @@ class Host(object):
     def attach(self, agent):
         self.agents.append(agent)
         return agent
+        
+    def create_socket(self, protocol, port = None):
+        if port and port in self.sockets:
+            return None
+        
+        port = None
+        for attempt in xrange(10000, 65535):
+            if attempt not in self.sockets:
+                port = attempt
+                break
+        
+        self.sockets[port] = Socket(protocol, self, port)
+        return self.sockets[port]
+        
+    def remove_socket(self, port):
+        del self.sockets[port]
+        
+    def dns_request(self, hostname, callback):
+        
+        def dns_callback(socket, data):
+            socket.close()
+            callback(IP(data))
+        
+        socket = self.create_socket('udp')
+        socket.callback = dns_callback
+        socket.send_to(hostname, (self.dns_server, 53))
         
     def __getitem__(self, key):
         assert(key == 0)
@@ -104,20 +145,39 @@ class Router(object):
         
     def __str__(self):
         return "[Router - process_time: {0}, interfaces: {1}, routes: {2}]".format(self.process_time, self.interfaces, self.routes)
+        
 
 class AgentService(object):
     def attach(self, env, input):
         host = env.expand(input[0])
         return host.attach(self)    
-        
-class AgentHTTPClient(AgentService):
-    pass
     
 class AgentHTTPServer(AgentService):
     pass
     
 class AgentDNSServer(AgentService):
     pass
+
+class AgentHTTPClient(AgentService):
+    def attach(self, env, input):
+        self.host = env.expand(input[0])
+        return self
+        
+    def do_get(self, ip):
+        socket = self.host.create_socket('tcp')
+        print("fudeu")
+        socket.close()
+        #self.host.socket_request(ip, 80, 'tcp', print)
+        
+    def do_stuff(self, input):
+        assert(input[0] == 'GET')
+        try:
+            target = IP(input[1])
+            self.do_get(target)
+            
+        except AssertionError:
+            self.host.dns_request(input[1], self.do_get)
+            
     
 class AgentSniffer(object):
     def attach(self, env, input):
