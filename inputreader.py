@@ -1,3 +1,5 @@
+import lib
+
 def find_first_of(s, occ, start = 0):
     i = len(s) + 1
     for c in occ:
@@ -24,34 +26,6 @@ def oursplit(input):
         start = e + 1
     return filter(None, resp)
     
-class Host:
-    def configurate(self, input):
-        self.ip, self.default_gateway, self.dns_server = input
-    
-class Router:
-    def __init__(self, size):
-        self.size = size
-        self.interfaces = [None] * size
-        
-    def configurate_route(self, input):
-        raise Exception("NYI")
-        
-    def configurate_performance(self, input):
-        raise Exception("NYI")
-        
-    def configurate_ip(self, input):
-        assert(len(input) % 2 == 0)
-        for i in xrange(len(input) / 2):
-            self.interfaces[int(input[i * 2 + 0])] = input[i * 2 + 1]
-        
-    def configurate(self, input):
-        if input[0] == 'route':
-            self.configurate_route(input[1:])
-        elif input[0] == 'performance':
-            self.configurate_performance(input[1:])
-        else:
-            self.configurate_ip(input)
-    
 class Simulator:
     def __init__(self, env):
         self.env = env
@@ -65,13 +39,17 @@ class Simulator:
             return getattr(self, 'method_' + name)(input[1:])
         
     def method_host(self, input):
-        return Host()
+        return lib.Host()
         
     def method_router(self, input):
-        return Router(int(input[0]))
+        return lib.Router(int(input[0]))
         
     def method_duplexlink(self, input):
-        return 'duplex-link'
+        source      = input[0]
+        destination = input[1]
+        if source.find('.') == -1: source += ".0"
+        if destination.find('.') == -1: destination += ".0"
+        return (self.env.expand(source), self.env.expand(destination), input[2], input[3])
  
 class Env:
     def function_set(self, input):
@@ -90,7 +68,11 @@ class Env:
         
     def expand(self, s):
         if s[0] == '$':
-            return self.variables[s[1:]]
+            try:
+                name, index = s[1:].split('.')
+                return self.variables[name][int(index)]
+            except ValueError:
+                return self.variables[s[1:]]
         else:
             return self.functions[s]
         

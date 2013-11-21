@@ -35,7 +35,7 @@ $simulator duplex-link $r0.2 $r1.0 2Mbps 20ms
 $simulator duplex-link $r1.1 $h2 10Mbps 5ms
 $simulator duplex-link $r1.2 $h3 5Mbps 2ms
 
-# Configuracao dos hosts: endereco IP do computador, endereço IP do
+# Configuracao dos hosts: endereço IP do computador, endereço IP do
 # roteador padrao e endereço IP do servidor DNS
 # Obs.: Considere que todas as redes sempre serao classe C, ou seja,
 # mascara = 255.255.255.0
