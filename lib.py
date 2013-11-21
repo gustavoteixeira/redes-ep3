@@ -11,16 +11,23 @@ def force_interface(s):
 
 class IP(object):
     def __init__(self, ip):
-        assert(ip.count(".") == 3)
+        assert(str(ip).count(".") == 3)
+        self.original = ip
+        self.value = self.convert(ip)
+    
+    def convert(self, s):
         sum = 0
         multi = 1
-        for piece in reversed(ip.split('.')):
+        for piece in reversed(s.split('.')):
             sum += int(piece) * multi
             multi *= 256
-        self.value = sum
+        return sum
         
     def __repr__(self):
         return str(self.value)
+        
+    def __str__(self):
+        return self.original
 
 class NetworkInterface(object):
     def __init__(self, ip):
@@ -50,14 +57,13 @@ class Socket(object):
         self.callback = None
         
     def send_to(self, data, address):
-        ip, port = address
-        print("Mandando para {0} o seguinte: '{1}'".format(address, data))
-        
+        ip, port = address        
         target_host = GAMBSDAHORA[ip.value]
-        target_host.receive_data(data, port)
+        target_host.receive_data(data, port, (self.host.interface.ip, self.port))
         
-    def receive(self, data):
-        self.callback(data)
+    def receive(self, data, source):
+        print("Socket {0} received data '{1}' from '{2}'. Callback is {3}".format(self, data, source, self.callback))
+        self.callback(self, data, source)
         
     def close(self):
         self.host.remove_socket(self.port)
@@ -66,7 +72,6 @@ class Host(object):
     def __init__(self):
         self.interface = NetworkInterface(None)
         self.default_gateway, self.dns_server = None, None
-        self.agents = []
         self.sockets = {}
 
     def configurate(self, input):
@@ -74,19 +79,16 @@ class Host(object):
         GAMBSDAHORA[self.interface.ip.value] = self
         return self
         
-    def attach(self, agent):
-        self.agents.append(agent)
-        return agent
-        
     def create_socket(self, protocol, port = None):
-        if port and port in self.sockets:
-            return None
-        
-        port = None
-        for attempt in xrange(10000, 65535):
-            if attempt not in self.sockets:
-                port = attempt
-                break
+        if port:
+            if port in self.sockets:
+                return None
+        else:
+            for attempt in xrange(10000, 65535):
+                if attempt not in self.sockets:
+                    port = attempt
+                    break
+                    
         
         self.sockets[port] = Socket(protocol, self, port)
         return self.sockets[port]
@@ -94,12 +96,13 @@ class Host(object):
     def remove_socket(self, port):
         del self.sockets[port]
         
-    def receive_data(self, data, port):
-        return self.sockets[port].receive(data)
+    def receive_data(self, data, port, source):
+        if port in self.sockets:
+            return self.sockets[port].receive(data, source)
         
     def dns_request(self, hostname, callback):
         
-        def dns_callback(socket, data):
+        def dns_callback(socket, data, source):
             socket.close()
             callback(IP(data))
         
@@ -165,13 +168,31 @@ class Router(object):
 class AgentService(object):
     def attach(self, env, input):
         host = env.expand(input[0])
-        return host.attach(self)    
+        self.socket = host.create_socket(self.protocol, self.port)
+        self.socket.callback = self.receive_request
     
 class AgentHTTPServer(AgentService):
-    pass
+    def __init__(self):
+        self.protocol = 'tcp'
+        self.port = 80
+        
+    def receive_request(self, socket, data, source):
+        print("HTTP Server: {0}, {1}".format(data, source))
+        socket.send_to("404 Error", source)
     
 class AgentDNSServer(AgentService):
-    pass
+    def __init__(self):
+        self.protocol = 'udp'
+        self.port = 53
+        
+    def attach(self, env, input):
+        AgentService.attach(self, env, input)
+        self.env = env
+        
+    def receive_request(self, socket, data, source):
+        print("DNS Server: {0}, {1}".format(data, source))
+        target = self.env.expand("$" + data)
+        socket.send_to(str(target.interface.ip), source)
 
 class AgentHTTPClient(AgentService):
     def attach(self, env, input):
@@ -179,10 +200,13 @@ class AgentHTTPClient(AgentService):
         return self
         
     def do_get(self, ip):
+        def get_callback(socket, data, source):
+            socket.close()
+            print("Received GET: '{0}'".format(data))
+    
         socket = self.host.create_socket('tcp')
-        print("fudeu")
-        socket.close()
-        #self.host.socket_request(ip, 80, 'tcp', print)
+        socket.callback = get_callback
+        socket.send_to("GET /", (ip, 80))
         
     def do_stuff(self, input):
         assert(input[0] == 'GET')

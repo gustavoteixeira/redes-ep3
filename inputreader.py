@@ -64,7 +64,9 @@ class Simulator:
             return("MEU DEUS TERMINOU AS COISAS")
         
         agent = self.env.expand("$" + request_input[0])
-        return agent.do_stuff(request_input[1:])
+        agent.do_stuff(request_input[1:])
+        
+        print("\n============\n")
  
 class Env:
     def function_set(self, input):
@@ -107,11 +109,6 @@ def parse(file):
             continue
         
         input = oursplit(line)
-        print(input)
-        print(env.evaluate(input))
-        print("")
+        env.evaluate(input)
     
-    print("-------")
-    for v in env.variables:
-        print(v, env.variables[v])
     #raise Exception("NYI")
