@@ -33,7 +33,7 @@ class Simulator:
     def __call__(self, input):
         if input[0][0] == '$':
             # Configurating a host or a router
-            return self.env.expand(input[0]).configurate(input[1:])
+            return self.env.expand(input[0]).configure(input[1:])
         else:
             name = input[0].replace('-', '') # - is an invalid character in method names in python
             return getattr(self, 'method_' + name)(input[1:])

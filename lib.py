@@ -26,11 +26,26 @@ class IP(object):
     def __repr__(self):
         return self.original
 
+class UDPPacket(object):
+    def __init__(self, data, source_port, destination_port):
+        self.data, self.source_port, self.destination_port = data, source_port, destination_port
+        
 class NetworkInterface(object):
     def __init__(self, owner):
         self.owner = owner
         self.ip = None
         self.link = None
+        
+    def configure(self, ip):
+        self.ip = ip
+        GAMBSDAHORA[ip.value] = self
+        
+    def send_packet(self, packet, destination_ip):
+        target_interface = GAMBSDAHORA[destination_ip.value] # MAGIA
+        target_interface.receive_packet(packet, self.ip)
+        
+    def receive_packet(self, packet, source_ip):
+        self.owner.receive_data(packet.data, packet.destination_port, (source_ip, packet.source_port))
         
     def __str__(self):
         return "[Interface - ip: {0}, link: {1}]".format(self.ip, self.link)
@@ -55,9 +70,10 @@ class Socket(object):
         self.callback = None
         
     def send_to(self, data, address):
-        ip, port = address        
-        target_host = GAMBSDAHORA[ip.value]
-        target_host.receive_data(data, port, (self.interface.ip, self.port))
+        destination_ip, destination_port = address
+        
+        packet = UDPPacket(data, self.port, destination_port)
+        self.interface.send_packet(packet, destination_ip)
         
     def receive(self, data, source):
         print("Socket {0} received data '{1}' from '{2}'.".format((self.interface.ip, self.port), data, source))
@@ -72,9 +88,9 @@ class Host(object):
         self.default_gateway, self.dns_server = None, None
         self.sockets = {}
 
-    def configurate(self, input):
-        self.interface.ip, self.default_gateway, self.dns_server = map(IP, input)
-        GAMBSDAHORA[self.interface.ip.value] = self
+    def configure(self, input):
+        ip, self.default_gateway, self.dns_server = map(IP, input)
+        self.interface.configure(ip)
         return self
         
     def create_socket(self, protocol, port = None):
@@ -125,7 +141,7 @@ class Router(object):
     def __getitem__(self, key):
         return self.interfaces[key]
         
-    def configurate_route(self, input):
+    def configure_route(self, input):
         assert(len(input) % 2 == 0)
         for x in range(len(input) / 2):
             mask = IP(input[2*x])
@@ -136,7 +152,7 @@ class Router(object):
                 target = self.interfaces[int(target)]
             self.routes.append((mask, target))
         
-    def configurate_performance(self, input):
+    def configure_performance(self, input):
         assert(len(input) % 2 == 1)
         self.process_time = input[0] # TODO
         for x in range(len(input) / 2):
@@ -144,18 +160,18 @@ class Router(object):
             size = int(input[2*x + 2])
             self.interfaces[interface].queue_size = size
         
-    def configurate_ip(self, input):
+    def configure_ip(self, input):
         assert(len(input) % 2 == 0)
         for i in xrange(len(input) / 2):
-            self.interfaces[int(input[i * 2 + 0])].ip = IP(input[i * 2 + 1])
+            self.interfaces[int(input[i * 2 + 0])].configure(IP(input[i * 2 + 1]))
         
-    def configurate(self, input):
+    def configure(self, input):
         if input[0] == 'route':
-            self.configurate_route(input[1:])
+            self.configure_route(input[1:])
         elif input[0] == 'performance':
-            self.configurate_performance(input[1:])
+            self.configure_performance(input[1:])
         else:
-            self.configurate_ip(input)
+            self.configure_ip(input)
         return self
         
     def __str__(self):
