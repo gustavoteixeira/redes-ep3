@@ -2,6 +2,13 @@ from __future__ import print_function
 
 GAMBSDAHORA = {}
 
+class IPPacket(object):
+    def __init__(self, data, source, destination):
+        self.ttl = 64
+        self.data = data
+        self.source = source
+        self.destination = destination
+
 class NetworkInterface(object):
     def __init__(self, owner):
         self.owner = owner
@@ -13,6 +20,10 @@ class NetworkInterface(object):
         GAMBSDAHORA[ip.value] = self
         
     def send_packet(self, packet, destination_ip):
+    
+        ippacket = IPPacket(packet, self.ip, destination_ip)
+        self.link.send_packet(ippacket, self)
+    
         target_interface = GAMBSDAHORA[destination_ip.value] # MAGIA
         target_interface.receive_packet(packet, self.ip)
         
