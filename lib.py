@@ -24,14 +24,12 @@ class IP(object):
         return sum
         
     def __repr__(self):
-        return str(self.value)
-        
-    def __str__(self):
         return self.original
 
 class NetworkInterface(object):
-    def __init__(self, ip):
-        self.ip = ip
+    def __init__(self, owner):
+        self.owner = owner
+        self.ip = None
         self.link = None
         
     def __str__(self):
@@ -52,25 +50,25 @@ class DuplexLink(object):
         return "[DuplexLink - bandwidth: {0}, latency: {1}, attached: {2}]".format(self.bandwidth, self.latency, self.endpoint_a != None)
 
 class Socket(object):
-    def __init__(self, protocol, host, port):
-        self.protocol, self.host, self.port = protocol, host, port
+    def __init__(self, protocol, interface, port):
+        self.protocol, self.interface, self.port = protocol, interface, port
         self.callback = None
         
     def send_to(self, data, address):
         ip, port = address        
         target_host = GAMBSDAHORA[ip.value]
-        target_host.receive_data(data, port, (self.host.interface.ip, self.port))
+        target_host.receive_data(data, port, (self.interface.ip, self.port))
         
     def receive(self, data, source):
-        print("Socket {0} received data '{1}' from '{2}'. Callback is {3}".format(self, data, source, self.callback))
+        print("Socket {0} received data '{1}' from '{2}'.".format((self.interface.ip, self.port), data, source))
         self.callback(self, data, source)
         
     def close(self):
-        self.host.remove_socket(self.port)
+        self.interface.owner.remove_socket(self.port)
         
 class Host(object):
     def __init__(self):
-        self.interface = NetworkInterface(None)
+        self.interface = NetworkInterface(self)
         self.default_gateway, self.dns_server = None, None
         self.sockets = {}
 
@@ -90,7 +88,7 @@ class Host(object):
                     break
                     
         
-        self.sockets[port] = Socket(protocol, self, port)
+        self.sockets[port] = Socket(protocol, self.interface, port)
         return self.sockets[port]
         
     def remove_socket(self, port):
@@ -106,7 +104,6 @@ class Host(object):
             socket.close()
             callback(IP(data))
         
-        print("DNS request for " + hostname)
         socket = self.create_socket('udp')
         socket.callback = dns_callback
         socket.send_to(hostname, (self.dns_server, 53))
@@ -121,7 +118,7 @@ class Host(object):
 class Router(object):
     def __init__(self, size):
         self.size = size
-        self.interfaces = [NetworkInterface(None) for _ in range(size)]
+        self.interfaces = [NetworkInterface(self) for _ in range(size)]
         self.process_time = None
         self.routes = []
         
@@ -177,7 +174,6 @@ class AgentHTTPServer(AgentService):
         self.port = 80
         
     def receive_request(self, socket, data, source):
-        print("HTTP Server: {0}, {1}".format(data, source))
         socket.send_to("404 Error", source)
     
 class AgentDNSServer(AgentService):
@@ -190,7 +186,6 @@ class AgentDNSServer(AgentService):
         self.env = env
         
     def receive_request(self, socket, data, source):
-        print("DNS Server: {0}, {1}".format(data, source))
         target = self.env.expand("$" + data)
         socket.send_to(str(target.interface.ip), source)
 
@@ -204,17 +199,21 @@ class AgentHTTPClient(AgentService):
             socket.close()
             print("Received GET: '{0}'".format(data))
     
+        print("Send GET request to {0}.".format(ip))
         socket = self.host.create_socket('tcp')
         socket.callback = get_callback
         socket.send_to("GET /", (ip, 80))
         
     def do_stuff(self, input):
         assert(input[0] == 'GET')
+        
+        print("\n============\nAgentHTTPClient do_stuff start! input: " + str(input))
         try:
             target = IP(input[1])
             self.do_get(target)
             
         except AssertionError:
+            print(input[1] + " is not an IP, query DNS.")
             self.host.dns_request(input[1], self.do_get)
             
     

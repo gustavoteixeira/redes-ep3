@@ -65,8 +65,6 @@ class Simulator:
         
         agent = self.env.expand("$" + request_input[0])
         agent.do_stuff(request_input[1:])
-        
-        print("\n============\n")
  
 class Env:
     def function_set(self, input):
