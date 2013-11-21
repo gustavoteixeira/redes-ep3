@@ -10,23 +10,37 @@ class NetworkInterface(object):
         self.ip = ip
         self.link = None
         
+    def __repr__(self):
+        return "[Interface - ip: {0}, link: {1}]".format(self.ip, self.link)
+        
 class DuplexLink(object):
-    def __init__(self, source, destination, bandwidth, latency):
+    def __init__(self, bandwidth, latency):
         self.bandwidth, self.latency = bandwidth, latency
-        self.source, self.destination = source, destination
-        source.link = self
-        destination.link = self
+        self.endpoint_a, self.endpoint_b = None, None
+        
+    def attach(self, endpoint_a, endpoint_b):
+        self.endpoint_a, self.endpoint_b = endpoint_a, endpoint_b
+        endpoint_a.link = self
+        endpoint_b.link = self
+        
+    def __repr__(self):
+        return "[DuplexLink - bandwidth: {0}, latency: {1}, attached: {2}]".format(self.bandwidth, self.latency, self.endpoint_a != None)
         
 class Host(object):
     def __init__(self):
         self.interface = NetworkInterface(None)
+        self.default_gateway, self.dns_server = None, None
 
     def configurate(self, input):
         self.interface.ip, self.default_gateway, self.dns_server = map(IP, input)
+        return self
         
     def __getitem__(self, key):
         assert(key == 0)
         return self.interface
+        
+    def __repr__(self):
+        return "[Host - interface: {0}, default_gateway: {1}, dns_server: {2}]".format(self.interface, self.default_gateway, self.dns_server)
     
 class Router(object):
     def __init__(self, size):
@@ -54,3 +68,7 @@ class Router(object):
             self.configurate_performance(input[1:])
         else:
             self.configurate_ip(input)
+        return self
+        
+    def __repr__(self):
+        return "[Router - interfaces: {0}]".format(self.interfaces) 

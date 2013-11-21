@@ -33,7 +33,7 @@ class Simulator:
     def __call__(self, input):
         if input[0][0] == '$':
             # Configurating a host or a router
-            self.env.expand(input[0]).configurate(input[1:])
+            return self.env.expand(input[0]).configurate(input[1:])
         else:
             name = input[0].replace('-', '') # - is an invalid character in method names in python
             return getattr(self, 'method_' + name)(input[1:])
@@ -49,7 +49,9 @@ class Simulator:
         destination = input[1]
         if source.find('.') == -1: source += ".0"
         if destination.find('.') == -1: destination += ".0"
-        return (self.env.expand(source), self.env.expand(destination), input[2], input[3])
+        link = lib.DuplexLink(input[2], input[3])
+        link.attach(self.env.expand(source), self.env.expand(destination))
+        return link
  
 class Env:
     def function_set(self, input):
