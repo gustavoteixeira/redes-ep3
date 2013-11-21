@@ -1,4 +1,4 @@
-import lib, base
+import lib, base, application
 
 def find_first_of(s, occ, start = 0):
     i = len(s) + 1
@@ -73,7 +73,7 @@ class Env:
         
     def function_new(self, input):
         class_name = input[0].replace('/', '')
-        return lib.__dict__[class_name]()
+        return application.__dict__[class_name]()
 
     def __init__(self):
         self.variables = { 'simulator': Simulator(self) }
