@@ -1,4 +1,4 @@
-import lib, base, application
+import base, application, transport, internet, link
 
 def find_first_of(s, occ, start = 0):
     i = len(s) + 1
@@ -39,17 +39,17 @@ class Simulator:
             return getattr(self, 'method_' + name)(input[1:])
         
     def method_host(self, input):
-        return lib.Host()
+        return transport.Host()
         
     def method_router(self, input):
-        return lib.Router(int(input[0]))
+        return transport.Router(int(input[0]))
         
     def method_duplexlink(self, input):
-        link = lib.DuplexLink(input[2], input[3])
+        l = link.DuplexLink(input[2], input[3])
         source      = base.force_interface(input[0])
         destination = base.force_interface(input[1])
-        link.attach(self.env.expand(source), self.env.expand(destination))
-        return link
+        l.attach(self.env.expand(source), self.env.expand(destination))
+        return l
         
     def method_attachagent(self, input):
         agent = self.env.expand(input[0])

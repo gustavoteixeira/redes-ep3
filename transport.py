@@ -1,7 +1,6 @@
 from __future__ import print_function
-import random
-import base
 from base import IP
+import internet
 
 GAMBSDAHORA = {}
 
@@ -9,40 +8,6 @@ class UDPPacket(object):
     def __init__(self, data, source_port, destination_port):
         self.data, self.source_port, self.destination_port = data, source_port, destination_port
         
-class NetworkInterface(object):
-    def __init__(self, owner):
-        self.owner = owner
-        self.ip = None
-        self.link = None
-        
-    def configure(self, ip):
-        self.ip = ip
-        GAMBSDAHORA[ip.value] = self
-        
-    def send_packet(self, packet, destination_ip):
-        target_interface = GAMBSDAHORA[destination_ip.value] # MAGIA
-        target_interface.receive_packet(packet, self.ip)
-        
-    def receive_packet(self, packet, source_ip):
-        self.owner.receive_data(packet.data, packet.destination_port, (source_ip, packet.source_port))
-        
-    def __str__(self):
-        return "[Interface - ip: {0}, link: {1}]".format(self.ip, self.link)
-        
-class DuplexLink(object):
-    def __init__(self, bandwidth, latency):
-        self.bandwidth, self.latency = bandwidth, latency
-        self.endpoint_a, self.endpoint_b = None, None
-        self.sniffers = []
-        
-    def attach(self, endpoint_a, endpoint_b):
-        self.endpoint_a, self.endpoint_b = endpoint_a, endpoint_b
-        endpoint_a.link = self
-        endpoint_b.link = self
-        
-    def __str__(self):
-        return "[DuplexLink - bandwidth: {0}, latency: {1}, attached: {2}]".format(self.bandwidth, self.latency, self.endpoint_a != None)
-
 class Socket(object):
     def __init__(self, protocol, interface, port):
         self.protocol, self.interface, self.port = protocol, interface, port
@@ -63,7 +28,7 @@ class Socket(object):
         
 class Host(object):
     def __init__(self):
-        self.interface = NetworkInterface(self)
+        self.interface = internet.NetworkInterface(self)
         self.default_gateway, self.dns_server = None, None
         self.sockets = {}
 
@@ -103,7 +68,7 @@ class Host(object):
 class Router(object):
     def __init__(self, size):
         self.size = size
-        self.interfaces = [NetworkInterface(self) for _ in range(size)]
+        self.interfaces = [internet.NetworkInterface(self) for _ in range(size)]
         self.process_time = None
         self.routes = []
         
