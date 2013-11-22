@@ -23,10 +23,11 @@ class DuplexLink(object):
         else:
             raise Exception("DuplexLink received send_packet from unknown source.")
             
-        time = self.calculate_transfer_time(packet) + self.latency
+        callback = partial(target.receive, packet)
+        callback()
+        #time = self.calculate_transfer_time(packet) + self.latency
             
-        TIMEMANAGERDAHORA.execute_in(time,
-                                     partial(target.receive_packet, packet))
+        #TIMEMANAGERDAHORA.execute_in(time, callback)
         
     def __str__(self):
         return "[DuplexLink - bandwidth: {0}, latency: {1}, attached: {2}]".format(self.bandwidth, self.latency, self.endpoint_a != None)

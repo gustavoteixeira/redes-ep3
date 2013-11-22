@@ -1,5 +1,5 @@
 from __future__ import print_function
-import base
+import base, transport
 from base import IP
 
 GAMBSDAHORA = {}
@@ -10,14 +10,14 @@ def MakeDNSRequest(base_host, target_hostname, callback):
         socket.close()
         callback(IP(data))
     
-    socket = base_host.create_socket('udp')
+    socket = transport.CreateSocketOn(base_host, 'udp')
     socket.callback = dns_callback
     socket.send_to(target_hostname, (base_host.dns_server, 53))
 
 class AgentService(object):
     def attach(self, env, input):
         host = env.expand(input[0])
-        self.socket = host.create_socket(self.protocol, self.port)
+        self.socket = transport.CreateSocketOn(host, self.protocol, self.port)
         self.socket.callback = self.receive_request
     
 class AgentHTTPServer(AgentService):
@@ -52,7 +52,7 @@ class AgentHTTPClient(AgentService):
             print("Received GET: '{0}'".format(data))
     
         print("Send GET request to {0}.".format(ip))
-        socket = self.host.create_socket('tcp')
+        socket = transport.CreateSocketOn(self.host, ('tcp'))
         socket.callback = get_callback
         socket.send_to("GET /", (ip, 80))
         

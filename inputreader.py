@@ -39,10 +39,10 @@ class Simulator:
             return getattr(self, 'method_' + name)(input[1:])
         
     def method_host(self, input):
-        return transport.Host()
+        return internet.Host()
         
     def method_router(self, input):
-        return transport.Router(int(input[0]))
+        return internet.Router(int(input[0]))
         
     def method_duplexlink(self, input):
         l = link.DuplexLink(input[2], input[3])
