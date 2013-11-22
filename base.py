@@ -8,6 +8,9 @@ def convert_time(t):
     else:
         time = float(t)
     return time
+    
+def convert_bandwidth(b):
+    return "OI COELHO" # TODO
 
 def force_interface(s):
     if s.find('.') == -1:
@@ -31,8 +34,11 @@ class IP(object):
     def __repr__(self):
         return self.original
         
+timemanagerglobal = None
 class TimeManager(object):
     def __init__(self):
+        global timemanagerglobal
+        timemanagerglobal = self
         self.current_time = 0.0
         self.timeline = Queue.PriorityQueue()
         
