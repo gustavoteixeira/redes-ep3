@@ -1,4 +1,5 @@
 import base, application, transport, internet, link
+from functools import partial
 
 def find_first_of(s, occ, start = 0):
     i = len(s) + 1
@@ -25,6 +26,7 @@ def oursplit(input):
         resp.append(input[(i+1):e])
         start = e + 1
     return filter(None, resp)
+    
     
 class Simulator:
     def __init__(self, env):
@@ -55,16 +57,17 @@ class Simulator:
         agent = self.env.expand(input[0])
         return agent.attach(self.env, input[1:])
         
-    def method_at(self, input):
-        time = input[0]
-        request = input[1]
-        
-        request_input = oursplit(request)
-        if request_input[0] == 'finish':
+    def action(self, input):
+        if input[0] == 'finish':
             return("MEU DEUS TERMINOU AS COISAS")
         
-        agent = self.env.expand("$" + request_input[0])
-        agent.do_stuff(request_input[1:])
+        agent = self.env.expand("$" + input[0])
+        agent.do_stuff(input[1:])
+        
+    def method_at(self, input):
+        time = base.convert_time(input[0])
+        request_input = oursplit(input[1])
+        self.env.timemanager.execute_in(time, partial(self.action, request_input))
  
 class Env:
     def function_set(self, input):
@@ -81,6 +84,7 @@ class Env:
             'set': self.function_set,
             'new': self.function_new
         }
+        self.timemanager = base.TimeManager()
                 
     def expand(self, s):
         if s[0] == '$':
@@ -108,5 +112,4 @@ def parse(file):
         
         input = oursplit(line)
         env.evaluate(input)
-    
-    #raise Exception("NYI")
+    return env

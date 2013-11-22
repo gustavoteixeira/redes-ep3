@@ -11,6 +11,10 @@ print("==================================")
 
 # Read input
 print("Reading configuration file '%s'..." % config.inputfile)
-inputreader.parse(open(config.inputfile))
+env = inputreader.parse(open(config.inputfile))
+
+print("Starting TimeManager loop!")
+while not env.timemanager.is_empty():
+    env.timemanager.execute_next()
 
 print("Goodbye!")

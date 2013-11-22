@@ -58,7 +58,6 @@ class AgentHTTPClient(AgentService):
     def do_stuff(self, input):
         assert(input[0] == 'GET')
         
-        print("\n============\nAgentHTTPClient do_stuff start! input: " + str(input))
         try:
             target = IP(input[1])
             self.do_get(target)

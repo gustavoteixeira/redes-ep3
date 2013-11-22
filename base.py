@@ -1,3 +1,5 @@
+import Queue
+
 def convert_time(t):
     if t.endswith("us"):
         time = float(t[:-2]) /1000000
@@ -28,3 +30,22 @@ class IP(object):
         
     def __repr__(self):
         return self.original
+        
+class TimeManager(object):
+    def __init__(self):
+        self.current_time = 0.0
+        self.timeline = Queue.PriorityQueue()
+        
+    def is_empty(self):
+        return self.timeline.empty()
+        
+    def execute_in(self, time, func):
+        assert(time > 0)
+        self.timeline.put((self.current_time + time, func))
+        
+    def execute_next(self):
+        time, func = self.timeline.get(False)
+        print("\n=====================")
+        print("TimeManager.execute_next: time = {0}\n".format(time))
+        self.current_time = time
+        func()
