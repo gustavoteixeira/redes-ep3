@@ -5,7 +5,6 @@ from base import IP
 GAMBSDAHORA = {}
 
 def MakeDNSRequest(base_host, target_hostname, callback):
-    
     def dns_callback(socket, data, source):
         socket.close()
         callback(IP(data))

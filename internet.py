@@ -1,12 +1,17 @@
 from __future__ import print_function
 import base
 
+COLAMAGICA = {}
+
 class IPPacket(object):
     def __init__(self, data, source, destination):
         self.ttl = 64
         self.data = data
         self.source = source
         self.destination = destination
+        
+    def __str__(self):
+        return "[IPPacket -- source_ip: {0}, destination_ip: {1}, data: {2}]".format(self.source, self.destination, self.data)
 
 class NetworkInterface(object):
     def __init__(self, owner):
@@ -16,10 +21,14 @@ class NetworkInterface(object):
         
     def configure(self, ip):
         self.ip = ip
+        COLAMAGICA[ip.value] = self
         
     def send_to(self, ippacket, destination_ip):
+        #print("NetworkInterface -- Mandando um {0} com destino {1}".format(ippacket.data, ippacket.destination))
+        COLAMAGICA[ippacket.destination.value].receive(ippacket)
+    
         # Simplesmente taca o pacote no fio?
-        self.link.send_packet(ippacket, self)
+        # self.link.send_packet(ippacket, self)
         
     def receive(self, ippacket):
         self.owner.receive(ippacket)
