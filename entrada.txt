@@ -11,11 +11,11 @@ set r1 [$simulator router 3]
 # Criacao dos enlaces ligando os computadores e os roteadores
 # para criar a simulacao abaixo:
 #
-# h0 -------- -------- h2
-# \ /
-# r0 ----------- r1
-# / \
-# h1 -------- -------- h3
+# h0                   h2
+#   \                 /
+#    r0 ----------- r1
+#   /                 \
+# h1                   h3
 #
 # O ’duplex-link’ diz que cada enlace tem capacidades em cada sentido
 # independentes. Ou seja, se configuro o enlace com 2Mbps, significa que

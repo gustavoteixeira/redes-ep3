@@ -50,8 +50,8 @@ class AgentHTTPClient(AgentService):
             socket.close()
             print("Received GET: '{0}'".format(data))
     
-        print("Send GET request to {0}.".format(ip))
-        socket = transport.CreateSocketOn(self.host, ('tcp'))
+        print("{1} -- Send GET request to {0}.".format(ip, self.host.interface.ip))
+        socket = transport.CreateSocketOn(self.host, 'tcp')
         socket.callback = get_callback
         socket.send_to("GET /", (ip, 80))
         

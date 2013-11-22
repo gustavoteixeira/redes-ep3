@@ -1,3 +1,11 @@
+def convert_time(t):
+    if t.endswith("us"):
+        time = float(t[:-2]) /1000000
+    elif t.endswith("ms"):
+        time = float(t[:-2]) /1000
+    else:
+        time = float(t)
+    return time
 
 def force_interface(s):
     if s.find('.') == -1:

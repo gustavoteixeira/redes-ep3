@@ -7,7 +7,7 @@ class UDPPacket(object):
         self.data, self.source_port, self.destination_port = data, source_port, destination_port
         
     def __str__(self):
-        return "[UDPSocket -- source_port: {0}, destination_port: {1}]".format(self.source_port, self.destination_port)
+        return "[UDPSocket -- {0} -> {1}, data: '{2}']".format(self.source_port, self.destination_port, self.data)
         
 class UDPSocket(object):
     def __init__(self, host, port):

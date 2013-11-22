@@ -1,5 +1,5 @@
 from __future__ import print_function
-import base
+import base, collections
 
 COLAMAGICA = {}
 
@@ -11,7 +11,9 @@ class IPPacket(object):
         self.destination = destination
         
     def __str__(self):
-        return "[IPPacket -- source_ip: {0}, destination_ip: {1}, data: {2}]".format(self.source, self.destination, self.data)
+        return "[IPPacket -- {0} -> {1}, data: {2}]".format(self.source, self.destination, self.data)
+        
+Route = collections.namedtuple("Route", "network, mask, value")
 
 class NetworkInterface(object):
     def __init__(self, owner):
@@ -23,14 +25,15 @@ class NetworkInterface(object):
         self.ip = ip
         COLAMAGICA[ip.value] = self
         
-    def send_to(self, ippacket, destination_ip):
-        #print("NetworkInterface -- Mandando um {0} com destino {1}".format(ippacket.data, ippacket.destination))
-        COLAMAGICA[ippacket.destination.value].receive(ippacket)
+    def send_to(self, ippacket):
+        #print("NetworkInterface({1}).send_to -- {0}".format(ippacket, self.ip))
+        #COLAMAGICA[ippacket.destination.value].receive(ippacket)
     
         # Simplesmente taca o pacote no fio?
-        # self.link.send_packet(ippacket, self)
+        self.link.send_packet(ippacket, self)
         
     def receive(self, ippacket):
+        #print("NetworkInterface({1}).receive -- {0}".format(ippacket, self.ip))
         self.owner.receive(ippacket)
         
     def __str__(self):
@@ -59,7 +62,7 @@ class Host(object):
     # Send data
     def send_to(self, data, destination_ip):
         ippacket = IPPacket(data, self.interface.ip, destination_ip)
-        self.interface.send_to(ippacket, self.default_gateway)
+        self.interface.send_to(ippacket)
     
     def receive(self, ippacket):
         port = ippacket.data.destination_port # Peek the transport data...
@@ -86,13 +89,13 @@ class Router(object):
     def configure_route(self, input):
         assert(len(input) % 2 == 0)
         for x in range(len(input) / 2):
-            mask = base.IP(input[2*x])
+            network = base.IP(input[2*x])
             target = input[2*x + 1]
             try:
                 target = base.IP(target)
             except AssertionError:
                 target = self.interfaces[int(target)]
-            self.routes.append((mask, target))
+            self.routes.append(Route(network, base.IP("255.255.255.0"), target))
         
     def configure_performance(self, input):
         assert(len(input) % 2 == 1)
@@ -115,15 +118,21 @@ class Router(object):
         else:
             self.configure_ip(input)
         return self
-        
-        
-        
+         
     # Send data
-    def send_to(self, data, destination_ip):
-        raise Exception("NYI")
+    def delegate_to(self, ippacket, target_ip):
+        for route in self.routes:
+            if (target_ip.value & route.mask.value) == route.network.value:
+                # Found the intended route to target
+                if type(route.value) == base.IP:
+                    return self.delegate_to(ippacket, route.value)
+                return route.value.send_to(ippacket)
+    
+    def send_to(self, ippacket):
+        self.delegate_to(ippacket, ippacket.destination)
     
     def receive(self, ippacket):
-        raise Exception("NYI")
+        self.send_to(ippacket)
         
     def __str__(self):
         return "[Router - process_time: {0}, interfaces: {1}, routes: {2}]".format(self.process_time, self.interfaces, self.routes)
