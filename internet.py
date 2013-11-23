@@ -34,7 +34,7 @@ class NetworkInterface(object):
         
     def receive(self, ippacket):
         #print("NetworkInterface({1}).receive -- {0}".format(ippacket, self.ip))
-        self.owner.receive(ippacket)
+        self.owner.receive(ippacket, self)
         
     def __str__(self):
         return "[Interface - ip: {0}, link: {1}]".format(self.ip, self.link)
@@ -64,7 +64,7 @@ class Host(object):
         ippacket = IPPacket(data, self.interface.ip, destination_ip)
         self.interface.send_to(ippacket)
     
-    def receive(self, ippacket):
+    def receive(self, ippacket, interface):
         port = ippacket.data.destination_port # Peek the transport data...
         if port in self.sockets:
             self.sockets[port].receive(ippacket.data, ippacket.source)
@@ -131,7 +131,7 @@ class Router(object):
     def send_to(self, ippacket):
         self.delegate_to(ippacket, ippacket.destination)
     
-    def receive(self, ippacket):
+    def receive(self, ippacket, interface):
         self.send_to(ippacket)
         
     def __str__(self):

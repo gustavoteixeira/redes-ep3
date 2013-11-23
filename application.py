@@ -2,13 +2,15 @@ from __future__ import print_function
 import base, transport
 from base import IP
 
-GAMBSDAHORA = {}
+def TimedPrint(s):
+    print("{:7.4f}".format(base.timemanagerglobal.current_time) + ": " + s)
 
 def MakeDNSRequest(base_host, target_hostname, callback):
     def dns_callback(socket, data, source):
         socket.close()
         callback(IP(data))
     
+    TimedPrint("Host {0} querying DNS for '{1}'.".format(base_host.interface.ip, target_hostname))
     socket = transport.CreateSocketOn(base_host, 'udp')
     socket.callback = dns_callback
     socket.send_to(target_hostname, (base_host.dns_server, 53))
@@ -25,7 +27,9 @@ class AgentHTTPServer(AgentService):
         self.port = 80
         
     def receive_request(self, socket, data, source):
-        socket.send_to("404 Error", source)
+        response = "404 Error"
+        TimedPrint("Host {0} sending HTTP response '{1}' to {2}.".format(socket.host.interface.ip, response, source))
+        socket.send_to(response, source)
     
 class AgentDNSServer(AgentService):
     def __init__(self):
@@ -48,9 +52,9 @@ class AgentHTTPClient(AgentService):
     def do_get(self, ip):
         def get_callback(socket, data, source):
             socket.close()
-            print("Received GET: '{0}'".format(data))
+            TimedPrint("Host {0} received GET: '{1}'".format(socket.host.interface.ip, data))
     
-        print("{1} -- Send GET request to {0}.".format(ip, self.host.interface.ip))
+        TimedPrint("Host {1} sending GET to '{0}'.".format(ip, self.host.interface.ip))
         socket = transport.CreateSocketOn(self.host, 'tcp')
         socket.callback = get_callback
         socket.send_to("GET /", (ip, 80))
@@ -63,7 +67,6 @@ class AgentHTTPClient(AgentService):
             self.do_get(target)
             
         except AssertionError:
-            print(input[1] + " is not an IP, query DNS.")
             MakeDNSRequest(self.host, input[1], self.do_get)
             
     

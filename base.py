@@ -10,7 +10,14 @@ def convert_time(t):
     return time
     
 def convert_bandwidth(b):
-    return "OI COELHO" # TODO
+    elif b.endswith("Gbps"):
+        bandwidth = float(b[:-4]) * 1024 * 1024 * 128
+    elif b.endswith("Mbps"):
+        bandwidth = float(b[:-4]) * 1024 * 128
+    elif b.endswith("Kbps"):
+        bandwidth = float(b[:-4]) * 128
+    bandwidth = float(b) # TODO
+    return bandwidth
 
 def force_interface(s):
     if s.find('.') == -1:
@@ -51,7 +58,5 @@ class TimeManager(object):
         
     def execute_next(self):
         time, func = self.timeline.get(False)
-        print("\n=====================")
-        print("TimeManager.execute_next: time = {0}\n".format(time))
         self.current_time = time
         func()
