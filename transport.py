@@ -3,11 +3,14 @@ from base import IP
 import internet
 
 class UDPPacket(object):
+    id = 0
     def __init__(self, data, source_port, destination_port):
         self.data, self.source_port, self.destination_port = data, source_port, destination_port
+        self.id = UDPPacket.id
+        UDPPacket.id += 1
         
     def __str__(self):
-        return "[UDPSocket -- {0} -> {1}, data: '{2}']".format(self.source_port, self.destination_port, self.data)
+        return "[UDPSocket-{3} -- {0} -> {1}, data: '{2}']".format(self.source_port, self.destination_port, self.data, self.id)
         
 class UDPSocket(object):
     def __init__(self, host, port):

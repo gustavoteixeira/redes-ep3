@@ -2,14 +2,17 @@ from __future__ import print_function
 import base, collections
 
 class IPPacket(object):
+    id = 0
     def __init__(self, data, source, destination):
         self.ttl = 64
         self.data = data
         self.source = source
         self.destination = destination
+        self.id = IPPacket.id
+        IPPacket.id += 1
         
     def __str__(self):
-        return "[IPPacket -- {0} -> {1}, data: {2}]".format(self.source, self.destination, self.data)
+        return "[IPPacket-{3} -- {0} -> {1}, data: {2}]".format(self.source, self.destination, self.data, self.id)
         
 Route = collections.namedtuple("Route", "network, mask, value")
 
