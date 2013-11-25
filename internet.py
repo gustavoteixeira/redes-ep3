@@ -1,8 +1,6 @@
 from __future__ import print_function
 import base, collections
 
-COLAMAGICA = {}
-
 class IPPacket(object):
     def __init__(self, data, source, destination):
         self.ttl = 64
@@ -23,13 +21,8 @@ class NetworkInterface(object):
         
     def configure(self, ip):
         self.ip = ip
-        COLAMAGICA[ip.value] = self
         
     def send_to(self, ippacket):
-        #print("NetworkInterface({1}).send_to -- {0}".format(ippacket, self.ip))
-        #COLAMAGICA[ippacket.destination.value].receive(ippacket)
-    
-        # Simplesmente taca o pacote no fio?
         self.link.send_packet(ippacket, self)
         
     def receive(self, ippacket):
@@ -80,8 +73,12 @@ class Router(object):
     def __init__(self, size):
         self.size = size
         self.interfaces = [NetworkInterface(self) for _ in range(size)]
+        for interface in self.interfaces:
+            interface.packet_queue = []
         self.process_time = None
         self.routes = []
+        self.next_interface = 0
+        self.active_processor = False
         
     def __getitem__(self, key):
         return self.interfaces[key]
@@ -99,11 +96,11 @@ class Router(object):
         
     def configure_performance(self, input):
         assert(len(input) % 2 == 1)
-        self.process_time = input[0] # TODO
+        self.process_time = base.convert_time(input[0])
         for x in range(len(input) / 2):
             interface = int(input[2*x + 1])
             size = int(input[2*x + 2])
-            self.interfaces[interface].queue_size = size
+            self.interfaces[interface].queue_maxsize = size
         
     def configure_ip(self, input):
         assert(len(input) % 2 == 0)
@@ -132,7 +129,27 @@ class Router(object):
         self.delegate_to(ippacket, ippacket.destination)
     
     def receive(self, ippacket, interface):
-        self.send_to(ippacket)
+        if len(interface.packet_queue) >= interface.queue_maxsize:
+            return # Dropping the packet!
+        interface.packet_queue.append(ippacket)
+        if not self.active_processor:
+            self.activate_processor()
+        
+    def activate_processor(self):
+        self.active_processor = True
+        base.timemanagerglobal.execute_in(self.process_time,
+                                          self.handle_packet)
+        
+    def handle_packet(self):
+        for i in range(3):
+            interface = self.interfaces[(self.next_interface + i) % 3]
+            if len(interface.packet_queue) > 0:
+                packet = interface.packet_queue.pop(0)
+                self.send_to(packet)
+                self.next_interface = (self.next_interface + 1) % 3
+                self.activate_processor()
+        self.active_processor = False
+        
         
     def __str__(self):
         return "[Router - process_time: {0}, interfaces: {1}, routes: {2}]".format(self.process_time, self.interfaces, self.routes)
