@@ -6,11 +6,14 @@ def TimedPrint(s):
     print("{:7.4f}".format(base.timemanagerglobal.current_time) + ": " + s)
 
 def MakeDNSRequest(base_host, target_hostname, callback):
+    start_time = base.timemanagerglobal.current_time
     def dns_callback(socket, data, source):
+        end_time = base.timemanagerglobal.current_time
+        TimedPrint("{0} received DNS in {1}ms".format(socket.host.interface.ip, int((end_time - start_time) * 1000)))
         socket.close()
         callback(IP(data))
     
-    TimedPrint("Host {0} querying DNS for '{1}'.".format(base_host.interface.ip, target_hostname))
+    TimedPrint("{0} querying DNS for '{1}'.".format(base_host.interface.ip, target_hostname))
     socket = transport.CreateSocketOn(base_host, 'udp')
     socket.callback = dns_callback
     socket.send_to(target_hostname, (base_host.dns_server, 53))
@@ -27,9 +30,8 @@ class AgentHTTPServer(AgentService):
         self.port = 80
         
     def receive_request(self, socket, data, source):
-        response = "404 Error"
-        TimedPrint("Host {0} sending HTTP response '{1}' to {2}.".format(socket.host.interface.ip, response, source))
-        socket.send_to(response, source)
+        #TimedPrint("{0} sending HTTP response to {1}.".format(socket.host.interface.ip, source))
+        socket.send_to("404 Error", source)
     
 class AgentDNSServer(AgentService):
     def __init__(self):
@@ -50,11 +52,13 @@ class AgentHTTPClient(AgentService):
         return self
         
     def do_get(self, ip):
+        start_time = base.timemanagerglobal.current_time
         def get_callback(socket, data, source):
+            end_time = base.timemanagerglobal.current_time
             socket.close()
-            TimedPrint("Host {0} received GET: '{1}'".format(socket.host.interface.ip, data))
+            TimedPrint("{0} received GET in {1}ms".format(socket.host.interface.ip, int((end_time - start_time) * 1000)))
     
-        TimedPrint("Host {1} sending GET to '{0}'.".format(ip, self.host.interface.ip))
+        TimedPrint("{1} sending GET to {0}.".format(ip, self.host.interface.ip))
         socket = transport.CreateSocketOn(self.host, 'tcp')
         socket.callback = get_callback
         socket.send_to("GET /", (ip, 80))

@@ -10,13 +10,14 @@ def convert_time(t):
     return time
     
 def convert_bandwidth(b):
-    elif b.endswith("Gbps"):
+    if b.endswith("Gbps"):
         bandwidth = float(b[:-4]) * 1024 * 1024 * 128
     elif b.endswith("Mbps"):
         bandwidth = float(b[:-4]) * 1024 * 128
     elif b.endswith("Kbps"):
         bandwidth = float(b[:-4]) * 128
-    bandwidth = float(b) # TODO
+    else:
+        bandwidth = float(b) # TODO
     return bandwidth
 
 def force_interface(s):
