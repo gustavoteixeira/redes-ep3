@@ -37,7 +37,8 @@ class DuplexLink(object):
             
             trans_packet = packet.data
             application_data = trans_packet.data
-            print("Application Layer:\n\tMessage: {0}\n".format(trans_packet.data))
+            message = (trans_packet.data[:100] + '...') if len(trans_packet.data) > 100 else trans_packet.data
+            print("Application Layer:\n\tMessage:\n{0}\n".format(message))
         base.timemanagerglobal.execute_in(self.calculate_transfer_time(packet) + self.latency, 
                                           partial(target.receive, packet))
         
