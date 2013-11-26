@@ -1,5 +1,5 @@
 from __future__ import print_function
-import base, transport
+import base, transport, re, os
 from base import IP
 
 def TimedPrint(s):
@@ -30,8 +30,17 @@ class AgentHTTPServer(AgentService):
         self.port = 80
         
     def receive_request(self, socket, data, source):
-        #TimedPrint("{0} sending HTTP response to {1}.".format(socket.host.interface.ip, source))
-        socket.send_to("404 Error", source)
+        m = re.match("^GET (.+) HTTP/1.1$", data)
+        f = None
+        if m:
+            try:
+                f = open("./" + m.group(1).replace("../", ""), "rb")
+                size = os.fstat(f.fileno()).st_size
+                socket.send_to("HTTP/1.1 200 OK\Content-Type: application/octet-stream\nContent-Length: " + str(size) + "\n\n" + f.read(), source)
+            except IOError:
+                socket.send_to("HTTP/1.1 404 NOT FOUND\nContent-Length: 0\n\n", source)
+        else:
+            socket.send_to("HTTP/1.1 400 BAD REQUEST\nContent-Length: 0\n\n", source)
     
 class AgentDNSServer(AgentService):
     def __init__(self):
@@ -56,12 +65,12 @@ class AgentHTTPClient(AgentService):
         def get_callback(socket, data, source):
             end_time = base.timemanagerglobal.current_time
             socket.close()
-            TimedPrint("{0} received GET in {1}ms".format(socket.host.interface.ip, int((end_time - start_time) * 1000)))
+            TimedPrint("{0} received GET in {1}ms [{2} bytes]".format(socket.host.interface.ip, int((end_time - start_time) * 1000), len(data)))
     
         TimedPrint("{1} sending GET to {0}.".format(ip, self.host.interface.ip))
         socket = transport.CreateSocketOn(self.host, 'tcp')
         socket.callback = get_callback
-        socket.send_to("GET /", (ip, 80))
+        socket.send_to("GET /teste.txt HTTP/1.1", (ip, 80))
         
     def do_stuff(self, input):
         assert(input[0] == 'GET')
