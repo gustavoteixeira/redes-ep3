@@ -1,11 +1,20 @@
 from __future__ import print_function
 from base import IP
-import internet
+import sys, internet
+
+class TCPPacket(object):
+    id = 0
+    def __init__(self, data, source_port, destination_port):
+        self.data, self.source_port, self.destination_port = data, source_port, destination_port
+        self.length = sys.getsizeof(data)
+        self.id = TCPPacket.id
+        TCPPacket.id += 1
 
 class UDPPacket(object):
     id = 0
     def __init__(self, data, source_port, destination_port):
         self.data, self.source_port, self.destination_port = data, source_port, destination_port
+        self.length = sys.getsizeof(data) + 32 # size of UDP header = 32 bytes (considering source port and checksum)
         self.id = UDPPacket.id
         UDPPacket.id += 1
         

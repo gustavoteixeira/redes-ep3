@@ -1,6 +1,6 @@
 from __future__ import print_function
 from functools import partial
-import base
+import base, transport
 
 class DuplexLink(object):
     def __init__(self, bandwidth, latency):
@@ -23,7 +23,21 @@ class DuplexLink(object):
             target = self.endpoint_a
         else:
             raise Exception("DuplexLink received send_packet from unknown source.")
+        
+        for sniffer in self.sniffers:
+            print("\nPacket {0} at time {1}s sniffed by {2}".format(packet.id, base.timemanagerglobal.current_time, sniffer))
             
+            trans_packet = packet.data
+            if(isinstance(trans_packet, transport.UDPPacket)):
+                print("Internet Layer (IP):\n\tFrom {0} to {1}, UDP, TTL {3}".format(packet.source, packet.destination, packet.ttl, packet.ttl))
+                print("Transport Layer (UDP):\n\tPorts: Source {0} Destination {1}, Length {2} bytes".format(trans_packet.source_port, trans_packet.destination_port, trans_packet.length))
+            elif(isinstance(trans_packet, transport.TCPPacket)):
+                print("Internet Layer (IP):\n\tFrom {0} to {1}, TCP, TTL {3}".format(packet.source, packet.destination, packet.ttl, packet.ttl))
+                print("Transport Layer (TCP):\n\tPorts: Source {0}, Destination {1}".format(trans_packet.source_port, trans_packet.destination_port))
+            
+            trans_packet = packet.data
+            application_data = trans_packet.data
+            print("Application Layer:\n\tMessage: {0}\n".format(trans_packet.data))
         base.timemanagerglobal.execute_in(self.calculate_transfer_time(packet) + self.latency, 
                                           partial(target.receive, packet))
         
