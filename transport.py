@@ -9,6 +9,9 @@ class TCPPacket(object):
         self.length = sys.getsizeof(data) + 20 # size of TCP header considering 0 bytes options
         self.id = TCPPacket.id
         TCPPacket.id += 1
+        
+    def __len__(self):
+        return self.length
 
 class UDPPacket(object):
     id = 0
@@ -17,6 +20,9 @@ class UDPPacket(object):
         self.length = sys.getsizeof(data) + 8 # size of UDP header = 8 bytes (considering source port and checksum)
         self.id = UDPPacket.id
         UDPPacket.id += 1
+        
+    def __len__(self):
+        return self.length
         
     def __str__(self):
         return "[UDPSocket-{3} -- {0} -> {1}, data: '{2}']".format(self.source_port, self.destination_port, self.data, self.id)

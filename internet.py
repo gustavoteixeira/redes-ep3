@@ -11,6 +11,9 @@ class IPPacket(object):
         self.id = IPPacket.id
         IPPacket.id += 1
         
+    def __len__(self):
+        return 4+4+4+len(self.data)
+        
     def __str__(self):
         return "[IPPacket-{3} -- {0} -> {1}, data: {2}]".format(self.source, self.destination, self.data, self.id)
         

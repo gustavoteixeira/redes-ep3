@@ -18,7 +18,7 @@ class DuplexLink(object):
         endpoint_b.link = self
         
     def calculate_transfer_time(self, packet):
-        return 0.0 # TODO
+        return len(packet) / self.bandwidth
         
     def send_packet(self, packet, source):
         if self.endpoint_a == source:
