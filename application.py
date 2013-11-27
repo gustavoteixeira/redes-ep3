@@ -88,7 +88,7 @@ class AgentSniffer(object):
         interface_a = env.expand(base.force_interface(input[0]))
         interface_b = env.expand(base.force_interface(input[1]))
         assert(interface_a.link == interface_b.link)
-        self.file = input[2]
+        self.file = open(input[2], "w")
         interface_a.link.sniffers.append(self)
         return self
         

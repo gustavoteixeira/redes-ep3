@@ -1,6 +1,10 @@
 from __future__ import print_function
 from functools import partial
-import base, transport
+import sys, base, transport
+
+def sniffer_print(message, sniffer):
+    print(msg)
+    sniffer.file.write(msg+"\n")
 
 class DuplexLink(object):
     def __init__(self, bandwidth, latency):
@@ -25,20 +29,36 @@ class DuplexLink(object):
             raise Exception("DuplexLink received send_packet from unknown source.")
         
         for sniffer in self.sniffers:
-            print("\nPacket {0} at time {1}s sniffed by {2}".format(packet.id, base.timemanagerglobal.current_time, sniffer))
+            msg = "Packet {0} at time {1}s sniffed by {2}".format(packet.id, base.timemanagerglobal.current_time, sniffer)
+            print(msg)
+            sniffer.file.write(msg+"\n")
             
             trans_packet = packet.data
             if(isinstance(trans_packet, transport.UDPPacket)):
-                print("Internet Layer (IP):\n\tFrom {0} to {1}, UDP, TTL {3}".format(packet.source, packet.destination, packet.ttl, packet.ttl))
-                print("Transport Layer (UDP):\n\tPorts: Source {0} Destination {1}, Length {2} bytes".format(trans_packet.source_port, trans_packet.destination_port, trans_packet.length))
+                msg = "Internet Layer (IP):\n\tFrom {0} to {1}, UDP, TTL {3}".format(packet.source, packet.destination, packet.ttl, packet.ttl)
+                print(msg)
+                sniffer.file.write(msg+"\n")
+                
+                msg = "Transport Layer (UDP):\n\tPorts: Source {0} Destination {1}, Length {2} bytes".format(trans_packet.source_port, trans_packet.destination_port, trans_packet.length)
+                print(msg)
+                sniffer.file.write(msg+"\n")
+                
             elif(isinstance(trans_packet, transport.TCPPacket)):
-                print("Internet Layer (IP):\n\tFrom {0} to {1}, TCP, TTL {3}".format(packet.source, packet.destination, packet.ttl, packet.ttl))
-                print("Transport Layer (TCP):\n\tPorts: Source {0}, Destination {1}".format(trans_packet.source_port, trans_packet.destination_port))
+                msg = "Internet Layer (IP):\n\tFrom {0} to {1}, TCP, {2},TTL {3}".format(packet.source, packet.destination, sys.getsizeof(packet.data)+20, packet.ttl)
+                print(msg)
+                sniffer.file.write(msg+"\n")
+                
+                msg = "Transport Layer (TCP):\n\tPorts: Source {0}, Destination {1}".format(trans_packet.source_port, trans_packet.destination_port)
+                print(msg)
+                sniffer.file.write(msg+"\n")
             
             trans_packet = packet.data
             application_data = trans_packet.data
-            message = (trans_packet.data[:100] + '...') if len(trans_packet.data) > 100 else trans_packet.data
-            print("Application Layer:\n\tMessage:\n{0}\n".format(message))
+            application_text = (trans_packet.data[:100] + '...') if len(trans_packet.data) > 100 else trans_packet.data
+            msg = "Application Layer:\n\tMessage:\n{0}\n".format(application_text)
+            print(msg)
+            sniffer.file.write(msg+"\n")
+            
         base.timemanagerglobal.execute_in(self.calculate_transfer_time(packet) + self.latency, 
                                           partial(target.receive, packet))
         

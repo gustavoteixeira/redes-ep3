@@ -92,8 +92,8 @@ $simulator attach-agent $dns3 $h3
 
 set sniffer1 [new Agent/Sniffer]
 set sniffer2 [new Agent/Sniffer]
-$simulator attach-agent $sniffer1 $r0.2 $r1.0 "/tmp/sniffer1"
-$simulator attach-agent $sniffer2 $h1 $r0.1 "/tmp/sniffer2"
+$simulator attach-agent $sniffer1 $r0.2 $r1.0 "sniffer1"
+$simulator attach-agent $sniffer2 $h1 $r0.1 "sniffer2"
 
 # Configuracao das comunicacoes entre os agentes. Defino o instante de
 # tempo em segundos quando o acesso deve ocorrer e o tipo de acesso a

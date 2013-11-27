@@ -6,7 +6,7 @@ class TCPPacket(object):
     id = 0
     def __init__(self, data, source_port, destination_port):
         self.data, self.source_port, self.destination_port = data, source_port, destination_port
-        self.length = sys.getsizeof(data)
+        self.length = sys.getsizeof(data) + 20 # size of TCP header considering 0 bytes options
         self.id = TCPPacket.id
         TCPPacket.id += 1
 
@@ -14,7 +14,7 @@ class UDPPacket(object):
     id = 0
     def __init__(self, data, source_port, destination_port):
         self.data, self.source_port, self.destination_port = data, source_port, destination_port
-        self.length = sys.getsizeof(data) + 32 # size of UDP header = 32 bytes (considering source port and checksum)
+        self.length = sys.getsizeof(data) + 8 # size of UDP header = 8 bytes (considering source port and checksum)
         self.id = UDPPacket.id
         UDPPacket.id += 1
         
@@ -37,8 +37,42 @@ class UDPSocket(object):
         
     def close(self):
         self.host.remove_socket(self.port)
+
+class TCPSocket(object):
+    def __init__(self, host, port):
+        self.host, self.port = host, port
+        self.state = "LISTEN"
+        self.callback = None
         
+    def send_to(self, data, address):
+        destination_ip, destination_port = address
+        if self.state == "SYN-RECEIVED":
+            self.state = "ESTABLISHED"
+        else:
+            self.state = "SYN-SENT"
+        packet = TCPPacket(data, self.port, destination_port)
+        self.host.send_to(packet, destination_ip)
         
+    def receive(self, tcppacket, source_ip):
+        if tcppacket.data == "FIN" and self.state == "ESTABLISHED":
+            self.state = "LAST-ACK"
+            send_to("FIN ACK", self.host)
+        elif tcppacket.data == "FIN ACK" and self.state == "FIN-WAIT-1":
+            self.state = "TIME-WAIT"
+            send_to("ACK", host)
+        elif tcppacket.data == "ACK" and self.state == "LAST-ACK":
+            self.host.remove_socket(self.port)
+        elif self.state == "SYN-SENT":
+            self.state = "SYN-RECEIVED"
+        else:
+            self.state = "ESTABLISHED"
+        self.callback(self, tcppacket.data, (source_ip, tcppacket.source_port))
+        
+    def close(self):
+        self.state = "FIN-WAIT-1"
+        send_to("FIN", self.host)
+        self.host.remove_socket(self.port)
+
 def CreateSocketOn(host, protocol, port = None):
     if port:
         if not host.port_free(port):
