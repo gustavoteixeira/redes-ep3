@@ -143,6 +143,9 @@ class Router(object):
             interface.packet_queue.append(ippacket)
             if not self.active_processor:
                 self.activate_processor()
+        else:
+            # TODO: ep4 aqui
+            pass
         
     def activate_processor(self):
         self.active_processor = True
