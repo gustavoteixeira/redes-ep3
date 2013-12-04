@@ -64,6 +64,7 @@ class Host(object):
         self.interface.send_to(ippacket)
     
     def receive(self, ippacket, interface):
+        ippacket.ttl -= 1
         port = ippacket.data.destination_port # Peek the transport data...
         if port in self.sockets:
             self.sockets[port].receive(ippacket.data, ippacket.source)
@@ -137,9 +138,11 @@ class Router(object):
     def receive(self, ippacket, interface):
         if len(interface.packet_queue) >= interface.queue_maxsize:
             return # Dropping the packet!
-        interface.packet_queue.append(ippacket)
-        if not self.active_processor:
-            self.activate_processor()
+        ippacket.ttl -= 1
+        if ippacket.ttl > 0:
+            interface.packet_queue.append(ippacket)
+            if not self.active_processor:
+                self.activate_processor()
         
     def activate_processor(self):
         self.active_processor = True
