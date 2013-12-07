@@ -73,7 +73,24 @@ class AgentHTTPClient(AgentService):
         socket.send_to("GET /teste.txt HTTP/1.1", (ip, 80))
         
     def do_traceroute(self, ip):
-        raise Exception("NYI")
+        class ICMPHandler(object):
+            def __init__(self):
+                self.distance = 1
+                self.count = 1
+            
+            def __call__(self, host, ippacket):
+                if self.count < 3:
+                    self.count += 1
+                elif ippacket.data.type == transport.ICMPPacket.TIME_EXCEEDED:
+                    self.distance += 1
+                    self.count = 1
+                else:
+                    host.icmp_handler = None
+                    return
+                host.send_to(transport.ICMPPacket(transport.ICMPPacket.ECHO_REQUEST), ip, self.distance)
+    
+        self.host.icmp_handler = ICMPHandler()
+        self.host.send_to(transport.ICMPPacket(transport.ICMPPacket.ECHO_REQUEST), ip, 1)
         
     def do_stuff(self, input):
         action = None
