@@ -27,6 +27,19 @@ class UDPPacket(object):
     def __str__(self):
         return "[UDPSocket-{3} -- {0} -> {1}, data: '{2}']".format(self.source_port, self.destination_port, self.data, self.id)
         
+class ICMPPacket(object):
+    id = 0
+    def __init__(self, type):
+        self.type = type
+        self.id = ICMPPacket.id
+        ICMPPacket.id += 1
+        
+    def __len__(self):
+        return 1
+        
+    def __str__(self):
+        return "[ICMPPacket-{1} -- type {0}]".format(self.type, self.id)
+        
 class UDPSocket(object):
     def __init__(self, host, port):
         self.host, self.port = host, port
