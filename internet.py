@@ -1,5 +1,5 @@
 from __future__ import print_function
-import base, collections
+import base, collections, transport
 
 class IPPacket(object):
     id = 0
@@ -59,15 +59,26 @@ class Host(object):
         del self.sockets[port]
         
     # Send data
-    def send_to(self, data, destination_ip):
+    def send_to(self, data, destination_ip, ttl = None):
         ippacket = IPPacket(data, self.interface.ip, destination_ip)
+        if ttl:
+            ippacket.ttl = ttl
         self.interface.send_to(ippacket)
     
     def receive(self, ippacket, interface):
         ippacket.ttl -= 1
-        port = ippacket.data.destination_port # Peek the transport data...
-        if port in self.sockets:
-            self.sockets[port].receive(ippacket.data, ippacket.source)
+        if isinstance(ippacket.data, transport.ICMPPacket):
+            if ippacket.data.type == transport.ICMPPacket.ECHO_REQUEST:
+                self.send_to(transport.ICMPPacket(transport.ICMPPacket.ECHO_REPLY), ippacket.source)
+            try:
+                self.icmp_handler(self, ippacket)
+            except AttributeError:
+                pass # nom nom
+        
+        else:
+            port = ippacket.data.destination_port # Peek the transport data...
+            if port in self.sockets:
+                self.sockets[port].receive(ippacket.data, ippacket.source)
                 
     def __getitem__(self, key):
         assert(key == 0)
@@ -134,18 +145,22 @@ class Router(object):
     
     def send_to(self, ippacket):
         self.delegate_to(ippacket, ippacket.destination)
-    
+             
     def receive(self, ippacket, interface):
         if len(interface.packet_queue) >= interface.queue_maxsize:
             return # Dropping the packet!
+        
         ippacket.ttl -= 1
         if ippacket.ttl > 0:
             interface.packet_queue.append(ippacket)
-            if not self.active_processor:
-                self.activate_processor()
+            
         else:
-            # TODO: ep4 aqui
-            pass
+            reply = IPPacket(transport.ICMPPacket(transport.ICMPPacket.TIME_EXCEEDED), 
+                             interface.ip, ippacket.source)
+            interface.packet_queue.append(reply)
+        
+        if not self.active_processor:
+            self.activate_processor()
         
     def activate_processor(self):
         self.active_processor = True
