@@ -51,13 +51,25 @@ class DuplexLink(object):
                 msg = "Transport Layer (TCP):\n\tPorts: Source {0}, Destination {1}".format(trans_packet.source_port, trans_packet.destination_port)
                 print(msg)
                 sniffer.file.write(msg+"\n")
+                
+            else:
+                msg = "Internet Layer (IP):\n\tFrom {0} to {1}, ICMP, TTL {3}".format(packet.source, packet.destination, packet.ttl, packet.ttl)
+                print(msg)
+                sniffer.file.write(msg+"\n")
+                
+                msg = "Internet Control Message Protocol (ICMP):\n\tType: {0}".format(trans_packet.type)
+                print(msg)
+                sniffer.file.write(msg+"\n")
             
-            trans_packet = packet.data
-            application_data = trans_packet.data
-            application_text = (trans_packet.data[:100] + '...') if len(trans_packet.data) > 100 else trans_packet.data
-            msg = "Application Layer:\n\tMessage:\n{0}\n".format(application_text)
-            print(msg)
-            sniffer.file.write(msg+"\n")
+            try:
+                trans_packet = packet.data
+                application_data = trans_packet.data
+                application_text = (trans_packet.data[:100] + '...') if len(trans_packet.data) > 100 else trans_packet.data
+                msg = "Application Layer:\n\tMessage:\n{0}\n".format(application_text)
+                print(msg)
+                sniffer.file.write(msg+"\n")
+            except AttributeError:
+                pass # No application layer!
             
         base.timemanagerglobal.execute_in(self.calculate_transfer_time(packet) + self.latency, 
                                           partial(target.receive, packet))
