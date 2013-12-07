@@ -29,6 +29,10 @@ class UDPPacket(object):
         
 class ICMPPacket(object):
     id = 0
+    ECHO_REPLY = 0
+    ECHO_REQUEST = 8
+    TIME_EXCEEDED = 11
+    
     def __init__(self, type):
         self.type = type
         self.id = ICMPPacket.id
