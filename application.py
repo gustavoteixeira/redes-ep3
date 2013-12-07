@@ -72,15 +72,26 @@ class AgentHTTPClient(AgentService):
         socket.callback = get_callback
         socket.send_to("GET /teste.txt HTTP/1.1", (ip, 80))
         
-    def do_stuff(self, input):
-        assert(input[0] == 'GET')
+    def do_traceroute(self, ip):
+        raise Exception("NYI")
         
+    def do_stuff(self, input):
+        action = None
+        if input[0] == 'GET':
+            action = self.do_get
+                
+        elif input[0] == 'traceroute':
+            action = self.do_traceroute
+        
+        else:
+            raise Exception("Unexpected command: " + str(input[0]))
+            
         try:
             target = IP(input[1])
-            self.do_get(target)
+            action(target)
             
         except AssertionError:
-            MakeDNSRequest(self.host, input[1], self.do_get)
+            MakeDNSRequest(self.host, input[1], action)
             
     
 class AgentSniffer(object):
